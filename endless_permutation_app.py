@@ -4,25 +4,17 @@ import time
 # Function to apply simultaneous neighbor rules
 def apply_simultaneous_rule(seq):
     n = len(seq)
-    swaps = [False] * n  # Track positions to swap
+    new_seq = seq[:]  # Copy of the sequence to apply changes simultaneously
 
-    # Identify swaps
-    for i in range(1, n - 1):
-        # Compare with previous neighbor
-        if seq[i] < seq[i - 1]:
-            swaps[i] = True
+    # Calculate swaps for all neighbors
+    for i in range(n):
+        # Swap with previous neighbor if needed
+        if i > 0 and seq[i] < seq[i - 1]:
+            new_seq[i], new_seq[i - 1] = seq[i - 1], seq[i]
 
-        # Compare with next neighbor
-        if seq[i] > seq[i + 1]:
-            swaps[i + 1] = True
-
-    # Apply all swaps simultaneously
-    new_seq = seq[:]
-    for i in range(1, n - 1):
-        if swaps[i]:
-            new_seq[i], new_seq[i - 1] = new_seq[i - 1], new_seq[i]  # Swap with previous
-        if swaps[i + 1]:
-            new_seq[i + 1], new_seq[i] = new_seq[i], new_seq[i + 1]  # Swap with next
+        # Swap with next neighbor if needed
+        if i < n - 1 and seq[i] > seq[i + 1]:
+            new_seq[i], new_seq[i + 1] = seq[i + 1], seq[i]
 
     return new_seq
 
