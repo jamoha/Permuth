@@ -4,14 +4,16 @@ import time
 # Function to apply the swapping rule
 def apply_rule(seq):
     new_seq = seq[:]
+    swaps = []
     for i in range(len(seq) - 1):
         if new_seq[i] > new_seq[i + 1]:
             new_seq[i], new_seq[i + 1] = new_seq[i + 1], new_seq[i]
-    return new_seq
+            swaps.append((i, i + 1))  # Record the swap
+    return new_seq, swaps
 
 # Streamlit app
 st.title("Live Endless Permutation Simulator")
-st.write("Watch the permutations evolve live after an initial flip!")
+st.write("Watch the swaps happen live after an initial flip!")
 
 # User inputs
 N = st.slider("Number of elements in the sequence", 5, 20, 10)
@@ -29,9 +31,21 @@ if st.button("Run Simulation"):
     
     # Placeholder for live updates
     placeholder = st.empty()
+    swap_placeholder = st.empty()
     
     for step in range(steps):
-        sequence = apply_rule(sequence)
+        sequence, swaps = apply_rule(sequence)
+        
         # Update the placeholder with the current sequence
-        placeholder.text(f"Step {step + 1}: {sequence}")
-        time.sleep(speed)  # Add delay for animation effect
+        placeholder.text(f"Sequence: {sequence}")
+        
+        # Highlight the swaps
+        if swaps:
+            swap_placeholder.text(f"Swaps: {swaps}")
+        else:
+            swap_placeholder.text("Swaps: None")
+        
+        # Add delay for animation effect
+        time.sleep(speed)
+    
+    st.write("Simulation Complete!")
