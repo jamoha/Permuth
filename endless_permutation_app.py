@@ -13,8 +13,8 @@ def apply_simultaneous_rule(seq):
             new_seq[i], new_seq[i - 1] = seq[i - 1], seq[i]
 
         # Swap with next neighbor if needed
-        if i < n - 1 and seq[i] < seq[i + 1]:
-            new_seq[i], new_seq[i + 1] = seq[i + 1], seq[i]
+        # if i < n - 1 and seq[i] < seq[i + 1]:
+           # new_seq[i], new_seq[i + 1] = seq[i + 1], seq[i]
 
     return new_seq
 
