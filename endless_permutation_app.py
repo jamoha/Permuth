@@ -9,11 +9,11 @@ def apply_simultaneous_rule(seq):
     # Calculate swaps for all neighbors
     for i in range(n):
         # Swap with previous neighbor if needed
-        if i > 0 and seq[i] < seq[i - 1]:
+        if i > 0 and seq[i] > seq[i - 1]:
             new_seq[i], new_seq[i - 1] = seq[i - 1], seq[i]
 
         # Swap with next neighbor if needed
-        if i < n - 1 and seq[i] > seq[i + 1]:
+        if i < n - 1 and seq[i] < seq[i + 1]:
             new_seq[i], new_seq[i + 1] = seq[i + 1], seq[i]
 
     return new_seq
