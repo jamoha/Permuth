@@ -1,18 +1,38 @@
 import streamlit as st
 import time
 
-# Function to apply the cyclic disruption rule
-def disrupt_sequence(seq, step):
+# Function to apply simultaneous neighbor rules
+def apply_simultaneous_rule(seq):
+    n = len(seq)
+    swaps = [False] * n  # Track positions to swap
+
+    # Identify swaps
+    for i in range(1, n - 1):
+        # Compare with previous neighbor
+        if seq[i] < seq[i - 1]:
+            swaps[i] = True
+
+        # Compare with next neighbor
+        if seq[i] > seq[i + 1]:
+            swaps[i + 1] = True
+
+    # Apply all swaps simultaneously
     new_seq = seq[:]
-    # Swap two elements based on the step count
-    i = step % len(new_seq)
-    j = (i + 1) % len(new_seq)  # Wrap around to ensure valid index
-    new_seq[i], new_seq[j] = new_seq[j], new_seq[i]
+    for i in range(1, n - 1):
+        if swaps[i]:
+            new_seq[i], new_seq[i - 1] = new_seq[i - 1], new_seq[i]  # Swap with previous
+        if swaps[i + 1]:
+            new_seq[i + 1], new_seq[i] = new_seq[i], new_seq[i + 1]  # Swap with next
+
     return new_seq
 
+# Function to calculate the metric (sum of differences of consecutive elements)
+def calculate_metric(seq):
+    return sum(abs(seq[i] - seq[i - 1]) for i in range(1, len(seq)))
+
 # Streamlit app
-st.title("Deterministic Endless Permutation Simulator")
-st.write("Watch deterministic endless permutations evolve live!")
+st.title("Simultaneous Neighbor Interaction Simulator with Metric")
+st.write("Watch permutations evolve with instantaneous neighbor reactions and view the chaos metric!")
 
 # User inputs
 N = st.slider("Number of elements in the sequence", 5, 20, 10)
@@ -28,14 +48,20 @@ if st.button("Run Simulation"):
     st.write("Initial Sequence:")
     st.write(sequence)
     
-    # Placeholder for live updates
-    placeholder = st.empty()
+    # Placeholders for live updates
+    sequence_placeholder = st.empty()
+    metric_placeholder = st.empty()
     
     for step in range(steps):
-        sequence = disrupt_sequence(sequence, step)
+        # Apply the rule
+        sequence = apply_simultaneous_rule(sequence)
         
-        # Update the placeholder with the current sequence
-        placeholder.text(f"Step {step + 1}: {sequence}")
+        # Calculate the metric
+        metric = calculate_metric(sequence)
+        
+        # Update the placeholders with the current sequence and metric
+        sequence_placeholder.text(f"Step {step + 1}: {sequence}")
+        metric_placeholder.text(f"Metric (Sum of Differences): {metric}")
         
         # Add delay for animation effect
         time.sleep(speed)
