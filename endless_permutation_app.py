@@ -33,7 +33,7 @@ speed = st.slider("Speed (seconds between updates)", 0.1, 1.0, 0.5)
 
 # Initialize sequence and perform an initial disruptive flip
 sequence = list(range(1, N + 1))
-sequence[1], sequence[-1] = sequence[-1], sequence[1]  # Initial flip
+sequence[1], sequence[2] = sequence[2], sequence[1]  # Initial flip
 
 # Run the simulation
 if st.button("Run Simulation"):
