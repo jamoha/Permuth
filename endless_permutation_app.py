@@ -1,7 +1,5 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+import time
 
 # Function to apply the swapping rule
 def apply_rule(seq):
@@ -11,43 +9,29 @@ def apply_rule(seq):
             new_seq[i], new_seq[i + 1] = new_seq[i + 1], new_seq[i]
     return new_seq
 
-# Function to simulate the process
-def simulate_permutations(sequence, steps):
-    states = [sequence]
-    for _ in range(steps):
-        sequence = apply_rule(sequence)
-        states.append(sequence)
-    return states
-
 # Streamlit app
-st.title("Endless Permutation Simulator")
-st.write("Visualize endless permutations generated from an initial flip.")
+st.title("Live Endless Permutation Simulator")
+st.write("Watch the permutations evolve live after an initial flip!")
 
 # User inputs
 N = st.slider("Number of elements in the sequence", 5, 20, 10)
 steps = st.slider("Number of steps to simulate", 10, 100, 50)
+speed = st.slider("Speed (seconds between updates)", 0.1, 1.0, 0.5)
 
 # Initialize sequence and perform an initial disruptive flip
 sequence = list(range(1, N + 1))
 sequence[1], sequence[-1] = sequence[-1], sequence[1]  # Swap two far-apart numbers
 
-# Simulate the process
-states = simulate_permutations(sequence, steps)
-
-# Display results
+# Run the simulation
 if st.button("Run Simulation"):
-    st.write(f"Initial sequence: {states[0]}")
+    st.write("Initial Sequence:")
+    st.write(sequence)
     
-    # Visualize each step
-    for i, state in enumerate(states):
-        st.write(f"Step {i}: {state}")
-        
-    # Plot the evolution
-    fig, ax = plt.subplots(figsize=(10, 6))
-    for i, state in enumerate(states):
-        ax.plot(range(N), state, label=f"Step {i}")
-    ax.set_title("Evolution of Permutations")
-    ax.set_xlabel("Position")
-    ax.set_ylabel("Value")
-    ax.legend()
-    st.pyplot(fig)
+    # Placeholder for live updates
+    placeholder = st.empty()
+    
+    for step in range(steps):
+        sequence = apply_rule(sequence)
+        # Update the placeholder with the current sequence
+        placeholder.text(f"Step {step + 1}: {sequence}")
+        time.sleep(speed)  # Add delay for animation effect
