@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import random
 import time
+import matplotlib.pyplot as plt
 
 # Function to count inversions in a permutation
 def count_inversions(permutation):
@@ -13,7 +14,7 @@ def count_inversions(permutation):
     return inversions
 
 # Streamlit app
-st.title("Live Simulation: Entropy, Energy, and Permutations")
+st.title("Live Simulation: Entropy and Energy")
 st.write("Adjust the parameters and control the simulation.")
 
 # User inputs
@@ -23,22 +24,17 @@ steps = st.slider("Number of simulation steps", min_value=10, max_value=1000, va
 
 # Control buttons
 start_button = st.button("Start Simulation")
-stop_button = st.button("Stop Simulation")
-resume_button = st.button("Resume Simulation")
 
 # Placeholders for live updates
 step_placeholder = st.empty()
 energy_placeholder = st.empty()
 entropy_placeholder = st.empty()
 permutation_placeholder = st.empty()
-chart_placeholder = st.empty()
+entropy_chart_placeholder = st.empty()
+energy_chart_placeholder = st.empty()
 
 # Simulation state
-simulation_state = {"running": False}
-
-# Initialize variables
 if start_button:
-    simulation_state["running"] = True
     step = 0
     current_permutation = list(range(1, N + 1))  # Start with ordered permutation
     current_energy = count_inversions(current_permutation)
@@ -47,21 +43,8 @@ if start_button:
     energy_evolution = []
     permutation_evolution = []
 
-# Simulation loop
-while simulation_state["running"]:
-    # Stop button
-    if stop_button:
-        simulation_state["running"] = False
-        break
-
-    # Resume button
-    if resume_button:
-        simulation_state["running"] = True
-
+    # Simulation loop
     for step in range(steps):
-        if not simulation_state["running"]:
-            break
-
         # Propose a new permutation by swapping two random elements
         new_permutation = current_permutation[:]
         i, j = random.sample(range(N), 2)
@@ -90,10 +73,27 @@ while simulation_state["running"]:
         entropy_placeholder.text(f"Current Entropy: {current_entropy:.4f}")
         permutation_placeholder.text(f"Current Permutation: {current_permutation}")
 
-        # Update live chart
-        with chart_placeholder:
-            st.line_chart({"Entropy": entropy_evolution, "Energy": energy_evolution})
+        # Update separate graphs
+        with entropy_chart_placeholder:
+            plt.figure(figsize=(6, 4))
+            plt.plot(entropy_evolution, label="Entropy", color="blue")
+            plt.title("Entropy Evolution")
+            plt.xlabel("Step")
+            plt.ylabel("Entropy (S)")
+            plt.grid(True)
+            st.pyplot(plt)
+            plt.close()
+
+        with energy_chart_placeholder:
+            plt.figure(figsize=(6, 4))
+            plt.plot(energy_evolution, label="Energy", color="red")
+            plt.title("Energy Evolution")
+            plt.xlabel("Step")
+            plt.ylabel("Energy")
+            plt.grid(True)
+            st.pyplot(plt)
+            plt.close()
 
         time.sleep(0.1)  # Add delay for live updates
 
-st.write("Simulation complete!")
+    st.write("Simulation complete!")
