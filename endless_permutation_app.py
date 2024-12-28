@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import random
 import math
+import time
 
 # Function to calculate inversions (energy)
 def calculate_inversions(permutation):
@@ -34,6 +35,17 @@ N = st.slider("Number of integers (N)", min_value=5, max_value=100, value=10, st
 T = st.slider("Temperature (T)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
 steps = st.slider("Number of simulation steps", min_value=100, max_value=5000, value=1000, step=100)
 
+# Control buttons
+start_simulation = st.button("Start Simulation")
+stop_simulation = st.button("Stop Simulation")
+
+# Initialize simulation state
+simulation_state = {"running": False}
+if start_simulation:
+    simulation_state["running"] = True
+if stop_simulation:
+    simulation_state["running"] = False
+
 # Initialize the system
 current_permutation = list(range(1, N + 1))  # Ordered state
 random.shuffle(current_permutation)  # Start with a random permutation
@@ -44,8 +56,15 @@ energies = []
 state_counts = [0] * (N * (N - 1) // 2 + 1)  # Possible energy levels (0 to max inversions)
 entropy_evolution = []
 
-# Simulation
+# Streamlit placeholders for real-time updates
+energy_chart_placeholder = st.empty()
+entropy_chart_placeholder = st.empty()
+
+# Simulation loop
 for step in range(steps):
+    if not simulation_state["running"]:
+        break  # Stop simulation if requested
+
     # Pick two adjacent elements to swap
     i = random.randint(0, N - 2)  # Ensure i and i+1 are valid indices
     delta_E = calculate_delta_energy(current_permutation, i)
@@ -64,11 +83,19 @@ for step in range(steps):
     current_entropy = calculate_entropy(state_counts, step + 1)
     entropy_evolution.append(current_entropy)
 
-    # Live updates every 100 steps
+    # Update charts every 100 steps
     if step % 100 == 0 or step == steps - 1:
+        with energy_chart_placeholder:
+            st.line_chart(energies, use_container_width=True)
+
+        with entropy_chart_placeholder:
+            st.line_chart(entropy_evolution, use_container_width=True)
+
         st.write(f"**Step {step + 1}/{steps}**")
         st.write(f"Current Energy: {current_energy}")
         st.write(f"Current Entropy: {current_entropy:.4f}")
-        st.line_chart({"Energy": energies, "Entropy": entropy_evolution})
 
-st.success("Simulation complete!")
+        time.sleep(0.1)  # Simulate delay for better visualization
+
+if simulation_state["running"]:
+    st.success("Simulation complete!")
