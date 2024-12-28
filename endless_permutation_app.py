@@ -94,6 +94,6 @@ if start_button:
             st.pyplot(plt)
             plt.close()
 
-        time.sleep(0.1)  # Add delay for live updates
+        time.sleep(0.01)  # Add delay for live updates
 
     st.write("Simulation complete!")
