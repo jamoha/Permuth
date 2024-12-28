@@ -18,7 +18,7 @@ st.write("Adjust the parameters and control the simulation.")
 
 # User inputs
 N = st.slider("Number of integers (N)", min_value=2, max_value=1000, value=4, step=1)
-T = st.slider("Temperature (T)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
+T = st.slider("Temperature (T)", min_value=0.1, max_value=1000.0, value=1.0, step=0.1)
 steps = st.slider("Number of simulation steps", min_value=10, max_value=1000, value=50, step=10)
 
 # Control buttons
