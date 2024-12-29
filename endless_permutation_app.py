@@ -3,9 +3,11 @@ import numpy as np
 import random
 import math
 
-# Parameters
-st.title("Enhanced Entropy and Energy Simulation")
+# App Title
+st.title("Entropy and Energy Simulation with Constraints")
 st.sidebar.header("Simulation Parameters")
+
+# Parameters
 N_B = st.sidebar.slider("Number of elements in subsystem B", 5, 100, 10, step=1)
 N_A = st.sidebar.slider("Number of elements in subsystem A", 1, N_B, 3, step=1)
 steps = st.sidebar.slider("Number of simulation steps", 100, 5000, 1000, step=100)
@@ -22,7 +24,6 @@ def calculate_entropy(state_counts, total_steps):
 
 # Function to calculate accessible microstates (restricted by A)
 def restricted_microstates(B, A):
-    # Restrict B's permutations based on A (e.g., B cannot overlap with A)
     restricted_B = [b for b in B if b not in A]
     return len(restricted_B) * (len(restricted_B) - 1) // 2
 
@@ -53,10 +54,10 @@ state_counts_B = [0] * (N_B * (N_B - 1) // 2 + 1)
 
 # Streamlit placeholders for live updates
 energy_chart_placeholder = st.empty()
-global_entropy_chart = st.empty()
-entropy_A_chart = st.empty()
-entropy_B_chart = st.empty()
-entropy_B_without_A_chart = st.empty()
+global_entropy_chart_placeholder = st.empty()
+entropy_A_chart_placeholder = st.empty()
+entropy_B_chart_placeholder = st.empty()
+entropy_B_without_A_chart_placeholder = st.empty()
 
 # Simulation loop
 for step in range(steps):
@@ -95,27 +96,28 @@ for step in range(steps):
 
     # Update live charts every 100 steps
     if step % 100 == 0 or step == steps - 1:
-        with energy_chart_placeholder:
-            st.line_chart(energies, use_container_width=True, height=250, width=700)
+        with energy_chart_placeholder.container():
+            st.subheader("Energy Evolution")
+            st.line_chart(energies)
 
-        with global_entropy_chart:
-            st.line_chart(global_entropies, use_container_width=True, height=250, width=700)
-        with entropy_A_chart:
-            st.line_chart(entropies_A, use_container_width=True, height=250, width=700)
-        with entropy_B_chart:
-            st.line_chart(entropies_B, use_container_width=True, height=250, width=700)
-        with entropy_B_without_A_chart:
-            st.line_chart(entropies_B_without_A, use_container_width=True, height=250, width=700)
+        with global_entropy_chart_placeholder.container():
+            st.subheader("Global Entropy Evolution")
+            st.line_chart(global_entropies)
 
-        st.write(f"**Step {step + 1}/{steps}**")
-        st.write(f"Global Entropy: {global_entropy:.4f}")
-        st.write(f"Entropy of A: {entropy_A:.4f}")
-        st.write(f"Entropy of B: {entropy_B:.4f}")
-        st.write(f"Entropy of B without A: {entropy_B_without_A:.4f}")
-        st.write(f"Energy: {energy:.4f}")
+        with entropy_A_chart_placeholder.container():
+            st.subheader("Entropy of Subsystem A")
+            st.line_chart(entropies_A)
+
+        with entropy_B_chart_placeholder.container():
+            st.subheader("Entropy of Subsystem B")
+            st.line_chart(entropies_B)
+
+        with entropy_B_without_A_chart_placeholder.container():
+            st.subheader("Entropy of Subsystem B without A")
+            st.line_chart(entropies_B_without_A)
 
 # Display final results
-if simulation_state["running"]:
+if simulation_state["running"] or step == steps - 1:
     st.success("Simulation complete!")
     st.write("### Final Results:")
     st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
