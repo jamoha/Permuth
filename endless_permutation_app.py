@@ -14,18 +14,22 @@ steps = st.sidebar.slider("Number of simulation steps", 100, 5000, 1000, step=10
 T = st.sidebar.slider("Temperature (T)", 0.1, 10.0, 1.0, step=0.1)
 
 # Control buttons
+start_simulation = st.sidebar.button("Start Simulation")
+stop_simulation = st.sidebar.button("Stop Simulation")
+
+# Initialize simulation state
 if "running" not in st.session_state:
     st.session_state.running = False
 
-if st.sidebar.button("Start Simulation"):
+if start_simulation:
     st.session_state.running = True
 
-if st.sidebar.button("Stop Simulation"):
+if stop_simulation:
     st.session_state.running = False
 
-# Initialize B and A
+# Initialize subsystems
 B = list(range(1, N_B + 1))  # Subsystem B
-A = list(range(1, N_A + 1))  # Subsystem A (static for simplicity)
+A = list(range(1, N_A + 1))  # Subsystem A
 
 # Function to calculate entropy
 def calculate_entropy(state_counts, total_steps):
@@ -54,14 +58,14 @@ global_entropy_chart_placeholder = st.empty()
 entropy_A_chart_placeholder = st.empty()
 entropy_B_chart_placeholder = st.empty()
 entropy_B_without_A_chart_placeholder = st.empty()
-step = 0
+
 # Simulation loop
 if st.session_state.running:
     for step in range(steps):
         if not st.session_state.running:
             break
 
-        # Randomly shuffle B
+        # Randomly shuffle B and A
         random.shuffle(B)
         random.shuffle(A)
 
@@ -113,12 +117,16 @@ if st.session_state.running:
                 st.subheader("Entropy of Subsystem B without A")
                 st.line_chart(entropies_B_without_A)
 
-# Display final results
-if st.session_state.running or step == steps - 1:
+    # Display final results
     st.success("Simulation complete!")
     st.write("### Final Results:")
-    st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
-    st.write(f"Entropy of A: {entropies_A[-1]:.4f}")
-    st.write(f"Entropy of B: {entropies_B[-1]:.4f}")
-    st.write(f"Entropy of B without A: {entropies_B_without_A[-1]:.4f}")
-    st.write(f"Final Energy: {energies[-1]:.4f}")
+    if global_entropies:
+        st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
+    if entropies_A:
+        st.write(f"Entropy of A: {entropies_A[-1]:.4f}")
+    if entropies_B:
+        st.write(f"Entropy of B: {entropies_B[-1]:.4f}")
+    if entropies_B_without_A:
+        st.write(f"Entropy of B without A: {entropies_B_without_A[-1]:.4f}")
+    if energies:
+        st.write(f"Final Energy: {energies[-1]:.4f}")
