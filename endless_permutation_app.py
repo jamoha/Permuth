@@ -1,14 +1,13 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import entropy
 
 # Title
-st.title("Logistic Map-Inspired Permutations with Entropy Evolution")
+st.title("Topological Entropy of Permutations with Local Interactions")
 
 # Sidebar for Parameters
 st.sidebar.header("Simulation Parameters")
-N = st.sidebar.slider("Number of Elements (N)", min_value=5, max_value=100, value=10, step=1)
+N = st.sidebar.slider("Number of Elements (N)", min_value=5, max_value=1000, value=10, step=1)
 r = st.sidebar.slider("Logistic Map Parameter (r)", min_value=0.0, max_value=4.0, value=3.8, step=0.01)
 iterations = st.sidebar.slider("Number of Iterations", min_value=10, max_value=1000, value=100, step=10)
 
@@ -33,6 +32,7 @@ if st.session_state.simulation_running:
     # Initialize permutation
     permutation = np.arange(1, N + 1)
     entropy_values = []
+    unique_permutation_counts = []
     permutation_history = []
 
     # Define logistic transformation function
@@ -41,7 +41,6 @@ if st.session_state.simulation_running:
 
     # Create a placeholder for the graph
     entropy_plot = st.empty()
-    permutation_display = st.empty()
 
     # Simulation loop
     for t in range(iterations):
@@ -55,16 +54,20 @@ if st.session_state.simulation_running:
         # Update permutation history
         permutation_history.append(tuple(permutation))
         
-        # Calculate current entropy
-        unique_permutations, counts = np.unique(permutation_history, axis=0, return_counts=True)
-        probs = counts / len(permutation_history)
-        current_entropy = entropy(probs)
-        entropy_values.append(current_entropy)
+        # Count unique permutations
+        unique_permutations = set(permutation_history)
+        unique_count = len(unique_permutations)
+        unique_permutation_counts.append(unique_count)
 
-        # Update graph and live display
+        # Estimate topological entropy
+        if t > 0:  # Avoid log(0) at the first step
+            current_entropy = (1 / (t + 1)) * np.log(unique_count)
+            entropy_values.append(current_entropy)
+
+        # Update graph with live data
         with entropy_plot.container():
             plt.figure(figsize=(8, 4))
-            plt.plot(entropy_values, label="Entropy Evolution", color="blue")
+            plt.plot(entropy_values, label="Topological Entropy", color="blue")
             plt.xlabel("Iteration")
             plt.ylabel("Entropy")
             plt.title("Entropy Evolution")
@@ -72,12 +75,9 @@ if st.session_state.simulation_running:
             plt.grid()
             st.pyplot(plt)
 
-        with permutation_display.container():
-            st.write(f"Iteration {t + 1}: Current Permutation: {permutation}")
-
     # Final Results
     st.subheader("Final Results")
     st.write("Final Permutation:", permutation)
-    st.write("Final Entropy Value:", entropy_values[-1])
+    st.write("Final Topological Entropy:", entropy_values[-1] if entropy_values else "Not computed")
 else:
     st.write("Adjust parameters and click **Start Simulation** to begin.")
