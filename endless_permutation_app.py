@@ -23,7 +23,7 @@ if st.sidebar.button("Start Simulation"):
 if st.sidebar.button("Stop Simulation"):
     st.session_state.running = False
 
-# Initialize simulation variables
+# Initialize B and A
 B = list(range(1, N_B + 1))  # Subsystem B
 A = list(range(1, N_A + 1))  # Subsystem A (static for simplicity)
 
@@ -102,4 +102,23 @@ if st.session_state.running:
                 st.line_chart(global_entropies)
 
             with entropy_A_chart_placeholder.container():
-                st.subheader("Entropy
+                st.subheader("Entropy of Subsystem A")
+                st.line_chart(entropies_A)
+
+            with entropy_B_chart_placeholder.container():
+                st.subheader("Entropy of Subsystem B")
+                st.line_chart(entropies_B)
+
+            with entropy_B_without_A_chart_placeholder.container():
+                st.subheader("Entropy of Subsystem B without A")
+                st.line_chart(entropies_B_without_A)
+
+# Display final results
+if st.session_state.running or step == steps - 1:
+    st.success("Simulation complete!")
+    st.write("### Final Results:")
+    st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
+    st.write(f"Entropy of A: {entropies_A[-1]:.4f}")
+    st.write(f"Entropy of B: {entropies_B[-1]:.4f}")
+    st.write(f"Entropy of B without A: {entropies_B_without_A[-1]:.4f}")
+    st.write(f"Final Energy: {energies[-1]:.4f}")
