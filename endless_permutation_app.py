@@ -31,7 +31,7 @@ def simulate_system(S, steps, temperature, A):
         entropy_B_history.append(entropy_B)
         entropy_S_history.append(entropy_S)
 
-        # Simulate local interactions (only neighboring swaps)
+        # Simulate local interactions (only neighboring swaps in S)
         i = np.random.randint(0, N - 1)  # Choose a random neighbor pair
         j = i + 1
         S_new = S.copy()
@@ -64,11 +64,11 @@ st.write("Simulate the evolution of entropy in subsets A, B, and the global syst
 N = st.number_input("Size of the system (N)", min_value=100, max_value=10000, value=1000)
 max_size_A = st.number_input("Maximum size of subset A", min_value=1, max_value=100, value=10)
 steps = st.number_input("Number of simulation steps", min_value=100, max_value=10000, value=1000)
-temperature = st.slider("Temperature (T)", 0.1, 100.0, 1.0)
+temperature = st.slider("Temperature (T)", 0.1, 10.0, 1.0)
 
 # Initialize the system
 S = np.arange(1, N + 1)
-#np.random.shuffle(S)
+np.random.shuffle(S)
 
 # Define subset A (fixed at the start)
 A = np.random.choice(S, size=max_size_A, replace=False)
