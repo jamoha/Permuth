@@ -68,7 +68,7 @@ temperature = st.slider("Temperature (T)", 0.1, 100.0, 1.0)
 
 # Initialize the system
 S = np.arange(1, N + 1)
-np.random.shuffle(S)
+#np.random.shuffle(S)
 
 # Define subset A (fixed at the start)
 A = np.random.choice(S, size=max_size_A, replace=False)
