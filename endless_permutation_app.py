@@ -54,7 +54,7 @@ global_entropy_chart_placeholder = st.empty()
 entropy_A_chart_placeholder = st.empty()
 entropy_B_chart_placeholder = st.empty()
 entropy_B_without_A_chart_placeholder = st.empty()
-
+step = 0
 # Simulation loop
 if st.session_state.running:
     for step in range(steps):
