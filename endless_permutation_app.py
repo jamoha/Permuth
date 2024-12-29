@@ -13,7 +13,7 @@ def calculate_entropy(arr):
     return inv_count
 
 def simulate_system(S, steps, temperature, max_size_A):
-    """Simulate the system and track entropy of A, B, and S."""
+    """Simulate the system with local interactions and track entropy."""
     N = len(S)
     entropy_A_history = []
     entropy_B_history = []
@@ -34,8 +34,9 @@ def simulate_system(S, steps, temperature, max_size_A):
         entropy_B_history.append(entropy_B)
         entropy_S_history.append(entropy_S)
 
-        # Randomly swap elements in S to simulate entropy evolution
-        i, j = np.random.choice(N, 2, replace=False)
+        # Simulate local interactions (only neighboring swaps)
+        i = np.random.randint(0, N - 1)  # Choose a random neighbor pair
+        j = i + 1
         S_new = S.copy()
         S_new[i], S_new[j] = S_new[j], S_new[i]
 
@@ -59,8 +60,24 @@ def simulate_system(S, steps, temperature, max_size_A):
         # Yield results for live updating
         yield entropy_A_history, entropy_B_history, entropy_S_history, A, B, S
 
+def find_subset_A(S, max_size_A):
+    """Find the subset A that minimizes the entropy of B when A is present."""
+    min_entropy = float('inf')
+    best_A = None
+
+    # Iterate over all possible subsets A of size up to max_size_A
+    for size_A in range(1, max_size_A + 1):
+        for A in combinations(S, size_A):
+            B = np.setdiff1d(S, A)
+            entropy_B = calculate_entropy(B)
+            if entropy_B < min_entropy:
+                min_entropy = entropy_B
+                best_A = A
+
+    return best_A, min_entropy
+
 # Streamlit app
-st.title("Entropy Evolution Simulation")
+st.title("Entropy Evolution Simulation with Local Interactions")
 st.write("Simulate the evolution of entropy in subsets A, B, and the global system S.")
 
 # Parameters
@@ -83,7 +100,9 @@ def toggle_simulation():
 st.button("Start/Stop Simulation", on_click=toggle_simulation)
 
 # Placeholders for live updating
-plot_placeholder = st.empty()
+plot_placeholder_A = st.empty()
+plot_placeholder_B = st.empty()
+plot_placeholder_S = st.empty()
 A_placeholder = st.empty()
 B_placeholder = st.empty()
 S_placeholder = st.empty()
@@ -92,15 +111,29 @@ S_placeholder = st.empty()
 if st.session_state.running:
     for entropy_A_history, entropy_B_history, entropy_S_history, A, B, S in simulate_system(S, steps, temperature, max_size_A):
         # Update plots
-        plt.figure(figsize=(10, 6))
-        plt.plot(entropy_A_history, label="Entropy of A")
-        plt.plot(entropy_B_history, label="Entropy of B")
-        plt.plot(entropy_S_history, label="Entropy of S")
+        plt.figure(figsize=(10, 3))
+        plt.plot(entropy_A_history, label="Entropy of A", color="red")
         plt.xlabel("Time Steps")
-        plt.ylabel("Entropy (Number of Inversions)")
-        plt.title("Evolution of Entropy")
+        plt.ylabel("Entropy")
+        plt.title("Evolution of Entropy of A")
         plt.legend()
-        plot_placeholder.pyplot(plt)
+        plot_placeholder_A.pyplot(plt)
+
+        plt.figure(figsize=(10, 3))
+        plt.plot(entropy_B_history, label="Entropy of B", color="blue")
+        plt.xlabel("Time Steps")
+        plt.ylabel("Entropy")
+        plt.title("Evolution of Entropy of B")
+        plt.legend()
+        plot_placeholder_B.pyplot(plt)
+
+        plt.figure(figsize=(10, 3))
+        plt.plot(entropy_S_history, label="Entropy of S", color="green")
+        plt.xlabel("Time Steps")
+        plt.ylabel("Entropy")
+        plt.title("Evolution of Entropy of S")
+        plt.legend()
+        plot_placeholder_S.pyplot(plt)
 
         # Update subset displays
         A_placeholder.write(f"### Subset A: {A}")
@@ -109,3 +142,9 @@ if st.session_state.running:
 
         # Pause for live updating
         time.sleep(0.1)
+
+    # Find the subset A that satisfies the condition
+    best_A, min_entropy = find_subset_A(S, max_size_A)
+    st.write(f"### Subset A that satisfies the condition:")
+    st.write(best_A)
+    st.write(f"The entropy of B when A is present ({min_entropy}) is less than when A is absent.")
