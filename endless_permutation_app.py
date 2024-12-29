@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import combinations
 
 def calculate_entropy(arr):
     """Calculate the number of inversions (entropy) in the array."""
@@ -11,56 +12,50 @@ def calculate_entropy(arr):
                 inv_count += 1
     return inv_count
 
-def simulate_entropy(N, steps, temperature):
-    """Simulate the system and track entropy over time using Boltzmann acceptance."""
-    # Initialize the set
-    S = np.arange(1, N + 1)
-    entropy_history = [calculate_entropy(S)]
+def find_subset_A(S, max_size_A):
+    """Find the subset A that minimizes the entropy of B = S \ A."""
+    min_entropy = float('inf')
+    best_A = None
 
-    for _ in range(steps):
-        # Randomly choose two elements to swap
-        i, j = np.random.choice(N, 2, replace=False)
-        S_new = S.copy()
-        S_new[i], S_new[j] = S_new[j], S_new[i]
+    # Iterate over all possible subsets A of size up to max_size_A
+    for size_A in range(1, max_size_A + 1):
+        for A in combinations(S, size_A):
+            B = np.setdiff1d(S, A)
+            entropy_B = calculate_entropy(B)
+            if entropy_B < min_entropy:
+                min_entropy = entropy_B
+                best_A = A
 
-        # Calculate change in entropy (ΔH) and energy (ΔE)
-        H_old = calculate_entropy(S)
-        H_new = calculate_entropy(S_new)
-        delta_H = H_new - H_old
-        delta_E = -delta_H
-
-        # Boltzmann acceptance probability
-        if delta_E <= 0:
-            # Always accept if entropy increases (energy decreases)
-            S = S_new
-        else:
-            # Accept with probability exp(-ΔE / T)
-            if np.random.rand() < np.exp(-delta_E / temperature):
-                S = S_new
-
-        # Record entropy
-        entropy_history.append(calculate_entropy(S))
-
-    return entropy_history
+    return best_A, min_entropy
 
 # Streamlit app
-st.title("Entropy Simulation with Boltzmann Acceptance")
-st.write("Simulating a system where entropy evolves based on Boltzmann distribution.")
+st.title("Deduce Subset A from Entropy Evolution")
+st.write("Find the subset A that minimizes the entropy of B = S \\ A.")
 
 # Parameters
-N = st.slider("Size of the set (N)", 10, 100, 50)
-steps = st.slider("Number of simulation steps", 100, 1000, 500)
-temperature = st.slider("Temperature (T)", 0.1, 10.0, 1.0)
+N = st.slider("Size of the system (N)", 5, 20, 10)
+max_size_A = st.slider("Maximum size of subset A", 1, 10, 5)
 
-# Run simulation
-entropy_history = simulate_entropy(N, steps, temperature)
+# Initialize the system
+S = np.arange(1, N + 1)
+np.random.shuffle(S)  # Start with a random permutation
 
-# Plot results
-st.write("### Entropy Over Time")
-plt.figure(figsize=(10, 6))
-plt.plot(entropy_history, label="Entropy")
-plt.xlabel("Time Steps")
-plt.ylabel("Entropy (Number of Inversions)")
-plt.title(f"Evolution of Entropy (Temperature = {temperature})")
-plt.legend()
+# Find the subset A
+best_A, min_entropy = find_subset_A(S, max_size_A)
+
+# Display results
+st.write("### System S:")
+st.write(S)
+st.write("### Subset A (deduced):")
+st.write(best_A)
+st.write("### Entropy of B = S \\ A:")
+st.write(min_entropy)
+
+# Plot the system
+st.write("### Visualization of Subsets")
+plt.figure(figsize=(10, 2))
+plt.bar(range(N), [1 if x in best_A else 0 for x in S], color=['red' if x in best_A else 'blue' for x in S])
+plt.xticks(range(N), S)
+plt.yticks([])
+plt.title("Subset A (Red) and Subset B (Blue)")
 st.pyplot(plt)
