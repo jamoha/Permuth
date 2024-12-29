@@ -6,30 +6,25 @@ import math
 # App Title
 st.title("Entropy and Energy Simulation")
 
-# Sidebar for simulation parameters
+# Sidebar for parameters
 st.sidebar.header("Simulation Parameters")
 N_B = st.sidebar.slider("Number of elements in subsystem B", 5, 50, 10, step=1)
 N_A = st.sidebar.slider("Number of elements in subsystem A", 1, N_B, 3, step=1)
 steps = st.sidebar.slider("Number of simulation steps", 100, 2000, 500, step=100)
 T = st.sidebar.slider("Temperature (T)", 0.1, 10.0, 1.0, step=0.1)
 
-# Buttons for simulation control
-start_simulation = st.sidebar.button("Start Simulation")
-stop_simulation = st.sidebar.button("Stop Simulation")
-
-# Initialize session state
+# Control buttons
 if "running" not in st.session_state:
     st.session_state.running = False
     st.session_state.step = 0
     st.session_state.results = None
 
-# Button logic
-if start_simulation:
+if st.sidebar.button("Start Simulation"):
     st.session_state.running = True
     st.session_state.step = 0
     st.session_state.results = None
 
-if stop_simulation:
+if st.sidebar.button("Stop Simulation"):
     st.session_state.running = False
 
 # Entropy calculation function
@@ -42,12 +37,13 @@ def restricted_microstates(B, A):
     restricted_B = [b for b in B if b not in A]
     return len(restricted_B) * (len(restricted_B) - 1) // 2
 
-# Main simulation
+# Main simulation logic
 if st.session_state.running:
-    # Initialize variables
-    B = list(range(1, N_B + 1))  # Subsystem B
-    A = list(range(1, N_A + 1))  # Subsystem A
+    # Initialize subsystems
+    B = list(range(1, N_B + 1))
+    A = list(range(1, N_A + 1))
 
+    # Tracking variables
     global_entropies = []
     entropies_A = []
     entropies_B = []
@@ -61,9 +57,10 @@ if st.session_state.running:
 
     for step in range(st.session_state.step, steps):
         if not st.session_state.running:
+            st.session_state.step = step
             break
 
-        # Randomly shuffle subsystems
+        # Random shuffle of subsystems
         random.shuffle(B)
         random.shuffle(A)
 
@@ -93,7 +90,7 @@ if st.session_state.running:
         energy = N_B - accessible_states_B_with_A
         energies.append(energy)
 
-        # Update live charts every 100 steps
+        # Update charts every 100 steps
         if step % 100 == 0 or step == steps - 1:
             st.line_chart(energies, caption="Energy Evolution")
             st.line_chart(global_entropies, caption="Global Entropy Evolution")
@@ -105,4 +102,17 @@ if st.session_state.running:
     st.session_state.results = {
         "global_entropy": global_entropies[-1] if global_entropies else None,
         "entropy_A": entropies_A[-1] if entropies_A else None,
-        "entropy_B": entropies_B[-1] if ent
+        "entropy_B": entropies_B[-1] if entropies_B else None,
+        "entropy_B_without_A": entropies_B_without_A[-1] if entropies_B_without_A else None,
+        "energy": energies[-1] if energies else None,
+    }
+
+# Display final results
+if not st.session_state.running and st.session_state.results:
+    st.success("Simulation complete!")
+    st.write("### Final Results:")
+    st.write(f"Global Entropy: {st.session_state.results['global_entropy']:.4f}")
+    st.write(f"Entropy of A: {st.session_state.results['entropy_A']:.4f}")
+    st.write(f"Entropy of B: {st.session_state.results['entropy_B']:.4f}")
+    st.write(f"Entropy of B without A: {st.session_state.results['entropy_B_without_A']:.4f}")
+    st.write(f"Final Energy: {st.session_state.results['energy']:.4f}")
