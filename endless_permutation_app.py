@@ -1,83 +1,61 @@
 import streamlit as st
-import random
-import math
+import numpy as np
+from scipy.stats import entropy
+import matplotlib.pyplot as plt
 
 # Title
-st.title("Subsystem Entropy Simulation")
+st.title("Logistic Map-Inspired Permutations with Local Interactions")
 
-# Sidebar for parameters
-st.sidebar.header("Set Simulation Parameters")
-N_B = st.sidebar.slider("Number of elements in subsystem B", 5, 50, 10, step=1)
-N_A = st.sidebar.slider("Number of elements in subsystem A", 1, N_B, 3, step=1)
-steps = st.sidebar.slider("Number of simulation steps", 100, 2000, 500, step=100)
+# Sidebar for Parameters
+st.sidebar.header("Simulation Parameters")
+N = st.sidebar.slider("Number of Elements (N)", 5, 50, 10, step=1)
+r = st.sidebar.slider("Logistic Map Parameter (r)", 0.0, 4.0, 3.8, step=0.01)
+iterations = st.sidebar.slider("Number of Iterations", 10, 500, 100, step=10)
 
-# Button to start the simulation
-if "simulation_started" not in st.session_state:
-    st.session_state.simulation_started = False
+# Button to Start Simulation
+if st.button("Run Simulation"):
 
-start_simulation = st.sidebar.button("Start Simulation")
+    st.write("Simulation running...")
+    
+    # Initial permutation
+    permutation = np.arange(1, N + 1)
+    st.write(f"Initial Permutation: {permutation}")
 
-# Ensure the button changes the session state
-if start_simulation:
-    st.session_state.simulation_started = True
+    # To store permutation history for entropy calculation
+    permutation_history = []
 
-# Function to calculate entropy
-def calculate_entropy(state_counts, total_steps):
-    probabilities = [count / total_steps for count in state_counts if count > 0]
-    return -sum(p * math.log(p) for p in probabilities)
-
-# Function to calculate accessible microstates
-def restricted_microstates(B, A):
-    restricted_B = [b for b in B if b not in A]
-    return len(restricted_B) * (len(restricted_B) - 1) // 2
-
-# Simulation logic
-if st.session_state.simulation_started:
-    st.write(f"Running simulation with {N_B} elements in B, {N_A} elements in A, and {steps} steps.")
-
-    # Initialize subsystems
-    B = list(range(1, N_B + 1))
-    A = list(range(1, N_A + 1))
-
-    # Initialize tracking variables
-    global_entropies = []
-    energies = []
-    state_counts_global = [0] * (N_B * (N_B - 1) // 2 + 1)
-
-    # Placeholders for live chart updates
-    energy_chart_placeholder = st.empty()
-    entropy_chart_placeholder = st.empty()
+    # Logistic-like transformation function
+    def logistic(x, r):
+        return r * x * (1 - x)
 
     # Simulation loop
-    for step in range(steps):
-        # Shuffle subsystems
-        random.shuffle(B)
-        random.shuffle(A)
+    for t in range(iterations):
+        # Apply logistic map locally
+        logistic_values = logistic(permutation / N, r)
+        for i in range(len(permutation) - 1):
+            # Compare and swap based on logistic map value
+            if logistic_values[i] > logistic_values[i + 1]:
+                permutation[i], permutation[i + 1] = permutation[i + 1], permutation[i]
+        
+        # Store the current permutation
+        permutation_history.append(permutation.copy())
 
-        # Calculate restricted microstates
-        accessible_states = restricted_microstates(B, A)
-        state_counts_global[accessible_states] += 1
+    # Calculate entropy evolution
+    unique_permutations = [tuple(p) for p in permutation_history]
+    unique_counts = {perm: unique_permutations.count(perm) for perm in set(unique_permutations)}
+    probs = np.array(list(unique_counts.values())) / iterations
+    entropy_values = entropy(probs)
 
-        # Calculate entropy and energy
-        entropy = calculate_entropy(state_counts_global, step + 1)
-        energy = N_B - accessible_states
+    # Visualization
+    st.subheader("Final Permutation")
+    st.write(permutation)
 
-        # Track results
-        global_entropies.append(entropy)
-        energies.append(energy)
+    st.subheader("Entropy Expansion Over Iterations")
+    plt.plot(range(1, len(unique_counts) + 1), entropy_values)
+    plt.xlabel("Iterations")
+    plt.ylabel("Entropy")
+    st.pyplot(plt)
 
-        # Update charts every 100 steps or at the final step
-        if step % 100 == 0 or step == steps - 1:
-            with energy_chart_placeholder.container():
-                st.subheader("Energy Evolution")
-                st.line_chart(energies)
-
-            with entropy_chart_placeholder.container():
-                st.subheader("Global Entropy Evolution")
-                st.line_chart(global_entropies)
-
-    # Final results
-    st.success("Simulation complete!")
-    st.write("### Final Results")
-    st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
-    st.write(f"Final Energy: {energies[-1]:.4f}")
+    st.subheader("Permutation Evolution")
+    for t, perm in enumerate(permutation_history):
+        st.write(f"Iteration {t + 1}: {perm}")
