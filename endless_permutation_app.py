@@ -13,21 +13,18 @@ N_A = st.sidebar.slider("Number of elements in subsystem A", 1, N_B, 3, step=1)
 steps = st.sidebar.slider("Number of simulation steps", 100, 5000, 1000, step=100)
 T = st.sidebar.slider("Temperature (T)", 0.1, 10.0, 1.0, step=0.1)
 
-# Control buttons
-start_simulation = st.sidebar.button("Start Simulation")
-stop_simulation = st.sidebar.button("Stop Simulation")
-
-# Initialize simulation state
+# Buttons to control simulation
 if "running" not in st.session_state:
     st.session_state.running = False
+    st.session_state.results = None
 
-if start_simulation:
+if st.sidebar.button("Start Simulation"):
     st.session_state.running = True
 
-if stop_simulation:
+if st.sidebar.button("Stop Simulation"):
     st.session_state.running = False
 
-# Initialize subsystems
+# Initialize B and A
 B = list(range(1, N_B + 1))  # Subsystem B
 A = list(range(1, N_A + 1))  # Subsystem A
 
@@ -117,16 +114,21 @@ if st.session_state.running:
                 st.subheader("Entropy of Subsystem B without A")
                 st.line_chart(entropies_B_without_A)
 
-    # Display final results
+    # Save results for display after stopping
+    st.session_state.results = {
+        "global_entropy": global_entropies[-1] if global_entropies else None,
+        "entropy_A": entropies_A[-1] if entropies_A else None,
+        "entropy_B": entropies_B[-1] if entropies_B else None,
+        "entropy_B_without_A": entropies_B_without_A[-1] if entropies_B_without_A else None,
+        "energy": energies[-1] if energies else None,
+    }
+
+# Display final results
+if not st.session_state.running and st.session_state.results:
     st.success("Simulation complete!")
     st.write("### Final Results:")
-    if global_entropies:
-        st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
-    if entropies_A:
-        st.write(f"Entropy of A: {entropies_A[-1]:.4f}")
-    if entropies_B:
-        st.write(f"Entropy of B: {entropies_B[-1]:.4f}")
-    if entropies_B_without_A:
-        st.write(f"Entropy of B without A: {entropies_B_without_A[-1]:.4f}")
-    if energies:
-        st.write(f"Final Energy: {energies[-1]:.4f}")
+    st.write(f"Global Entropy: {st.session_state.results['global_entropy']:.4f}")
+    st.write(f"Entropy of A: {st.session_state.results['entropy_A']:.4f}")
+    st.write(f"Entropy of B: {st.session_state.results['entropy_B']:.4f}")
+    st.write(f"Entropy of B without A: {st.session_state.results['entropy_B_without_A']:.4f}")
+    st.write(f"Final Energy: {st.session_state.results['energy']:.4f}")
