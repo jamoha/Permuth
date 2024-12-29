@@ -64,7 +64,7 @@ st.write("Simulate the evolution of entropy in subsets A, B, and the global syst
 N = st.number_input("Size of the system (N)", min_value=100, max_value=10000, value=1000)
 max_size_A = st.number_input("Maximum size of subset A", min_value=1, max_value=100, value=10)
 steps = st.number_input("Number of simulation steps", min_value=100, max_value=10000, value=1000)
-temperature = st.slider("Temperature (T)", 0.1, 10.0, 1.0)
+temperature = st.slider("Temperature (T)", 0.1, 100.0, 1.0)
 
 # Initialize the system
 S = np.arange(1, N + 1)
