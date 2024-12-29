@@ -42,6 +42,13 @@ if st.button("Run Simulation"):
     state_counts_B = [0] * (N_B * (N_B - 1) // 2 + 1)
     state_counts_B_without_A = [0] * (N_B * (N_B - 1) // 2 + 1)
 
+    # Streamlit placeholders for live updates
+    energy_chart_placeholder = st.empty()
+    global_entropy_chart_placeholder = st.empty()
+    entropy_A_chart_placeholder = st.empty()
+    entropy_B_chart_placeholder = st.empty()
+    entropy_B_without_A_chart_placeholder = st.empty()
+
     # Simulation loop
     for step in range(steps):
         # Random shuffle of subsystems
@@ -74,23 +81,29 @@ if st.button("Run Simulation"):
         energy = N_B - accessible_states_B_with_A
         energies.append(energy)
 
-        # Update charts every 100 steps
+        # Update charts every 100 steps or at the final step
         if step % 100 == 0 or step == steps - 1:
-            st.subheader("Energy Evolution")
-            st.line_chart(energies)
+            with energy_chart_placeholder.container():
+                st.subheader("Energy Evolution")
+                st.line_chart(energies)
 
-            st.subheader("Global Entropy Evolution")
-            st.line_chart(global_entropies)
+            with global_entropy_chart_placeholder.container():
+                st.subheader("Global Entropy Evolution")
+                st.line_chart(global_entropies)
 
-            st.subheader("Entropy of Subsystem A")
-            st.line_chart(entropies_A)
+            with entropy_A_chart_placeholder.container():
+                st.subheader("Entropy of Subsystem A")
+                st.line_chart(entropies_A)
 
-            st.subheader("Entropy of Subsystem B")
-            st.line_chart(entropies_B)
+            with entropy_B_chart_placeholder.container():
+                st.subheader("Entropy of Subsystem B")
+                st.line_chart(entropies_B)
 
-            st.subheader("Entropy of Subsystem B without A")
-            st.line_chart(entropies_B_without_A)
+            with entropy_B_without_A_chart_placeholder.container():
+                st.subheader("Entropy of Subsystem B without A")
+                st.line_chart(entropies_B_without_A)
 
+    # Simulation complete
     st.success("Simulation complete!")
     st.write("### Final Results")
     st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
