@@ -6,13 +6,13 @@ import math
 st.title("Subsystem Entropy Simulation")
 
 # Sidebar for parameters
-st.sidebar.header("Simulation Parameters")
+st.sidebar.header("Set Parameters")
 N_B = st.sidebar.slider("Number of elements in subsystem B", 5, 50, 10, step=1)
 N_A = st.sidebar.slider("Number of elements in subsystem A", 1, N_B, 3, step=1)
 steps = st.sidebar.slider("Number of simulation steps", 100, 2000, 500, step=100)
 
 # Button to start the simulation
-run_simulation = st.button("Run Simulation")
+start_simulation = st.button("Start Simulation")
 
 # Function to calculate entropy
 def calculate_entropy(state_counts, total_steps):
@@ -25,8 +25,8 @@ def restricted_microstates(B, A):
     return len(restricted_B) * (len(restricted_B) - 1) // 2
 
 # Simulation logic
-if run_simulation:
-    st.write("Simulation started...")
+if start_simulation:
+    st.write(f"Running simulation with {N_B} elements in B, {N_A} elements in A, and {steps} steps.")
 
     # Initialize subsystems
     B = list(range(1, N_B + 1))
