@@ -76,11 +76,20 @@ if st.button("Run Simulation"):
 
         # Update charts every 100 steps
         if step % 100 == 0 or step == steps - 1:
-            st.line_chart(energies, caption="Energy Evolution")
-            st.line_chart(global_entropies, caption="Global Entropy Evolution")
-            st.line_chart(entropies_A, caption="Entropy of Subsystem A")
-            st.line_chart(entropies_B, caption="Entropy of Subsystem B")
-            st.line_chart(entropies_B_without_A, caption="Entropy of Subsystem B without A")
+            st.subheader("Energy Evolution")
+            st.line_chart(energies)
+
+            st.subheader("Global Entropy Evolution")
+            st.line_chart(global_entropies)
+
+            st.subheader("Entropy of Subsystem A")
+            st.line_chart(entropies_A)
+
+            st.subheader("Entropy of Subsystem B")
+            st.line_chart(entropies_B)
+
+            st.subheader("Entropy of Subsystem B without A")
+            st.line_chart(entropies_B_without_A)
 
     st.success("Simulation complete!")
     st.write("### Final Results")
