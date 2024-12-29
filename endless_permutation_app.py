@@ -1,17 +1,13 @@
 import streamlit as st
 
-# Title
-st.title("Minimal Streamlit Test")
+st.title("Test Streamlit App")
 
-# Sidebar Sliders and Button
-st.sidebar.header("Test Sidebar")
+# Sidebar Parameters
+st.sidebar.header("Parameters")
 number = st.sidebar.slider("Pick a Number", 1, 100, 50)
-start_button = st.sidebar.button("Start")
+button = st.sidebar.button("Click Me")
 
 # Main Output
 st.write(f"Selected Number: {number}")
-
-if start_button:
-    st.write("Button Clicked!")
-else:
-    st.write("Click the button to start.")
+if button:
+    st.write("Button was clicked!")
