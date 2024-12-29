@@ -9,5 +9,4 @@ button = st.sidebar.button("Click Me")
 
 # Main Output
 st.write(f"Selected Number: {number}")
-if button:
-    st.write("Button was clicked!")
+
