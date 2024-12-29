@@ -2,100 +2,124 @@ import streamlit as st
 import numpy as np
 import random
 import math
-import time
 
-# Function to calculate inversions (energy)
-def calculate_inversions(permutation):
-    inversions = 0
-    for i in range(len(permutation)):
-        for j in range(i + 1, len(permutation)):
-            if permutation[i] > permutation[j]:
-                inversions += 1
-    return inversions
+# Parameters
+st.title("Enhanced Entropy and Energy Simulation")
+st.sidebar.header("Simulation Parameters")
+N_B = st.sidebar.slider("Number of elements in subsystem B", 5, 100, 10, step=1)
+N_A = st.sidebar.slider("Number of elements in subsystem A", 1, N_B, 3, step=1)
+steps = st.sidebar.slider("Number of simulation steps", 100, 5000, 1000, step=100)
+T = st.sidebar.slider("Temperature (T)", 0.1, 10.0, 1.0, step=0.1)
 
-# Function to calculate local energy change (delta E)
-def calculate_delta_energy(permutation, i):
-    if permutation[i] > permutation[i + 1]:
-        return -1  # Removing an inversion
-    elif permutation[i] < permutation[i + 1]:
-        return 1  # Adding an inversion
-    return 0  # No change
+# Initialize B and A
+B = list(range(1, N_B + 1))  # Subsystem B
+A = list(range(1, N_A + 1))  # Subsystem A (static for simplicity)
 
 # Function to calculate entropy
 def calculate_entropy(state_counts, total_steps):
     probabilities = [count / total_steps for count in state_counts if count > 0]
     return -sum(p * math.log(p) for p in probabilities)
 
-# Streamlit app
-st.title("Local Transitions Simulation with Boltzmann Distribution")
-st.write("Simulate energy and entropy evolution based on local transitions with Boltzmann distribution.")
-
-# User inputs
-N = st.slider("Number of integers (N)", min_value=5, max_value=100, value=10, step=1)
-T = st.slider("Temperature (T)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
-steps = st.slider("Number of simulation steps", min_value=100, max_value=5000, value=1000, step=100)
+# Function to calculate accessible microstates (restricted by A)
+def restricted_microstates(B, A):
+    # Restrict B's permutations based on A (e.g., B cannot overlap with A)
+    restricted_B = [b for b in B if b not in A]
+    return len(restricted_B) * (len(restricted_B) - 1) // 2
 
 # Control buttons
 start_simulation = st.button("Start Simulation")
 stop_simulation = st.button("Stop Simulation")
+resume_simulation = st.button("Resume Simulation")
 
-# Initialize simulation state
+# Simulation state
 simulation_state = {"running": False}
 if start_simulation:
     simulation_state["running"] = True
 if stop_simulation:
     simulation_state["running"] = False
+if resume_simulation:
+    simulation_state["running"] = True
 
-# Initialize the system
-current_permutation = list(range(1, N + 1))  # Ordered state
-random.shuffle(current_permutation)  # Start with a random permutation
-current_energy = calculate_inversions(current_permutation)
-
-# Initialize variables for tracking
+# Initialize tracking variables
+global_entropies = []
+entropies_A = []
+entropies_B = []
+entropies_B_without_A = []
 energies = []
-state_counts = [0] * (N * (N - 1) // 2 + 1)  # Possible energy levels (0 to max inversions)
-entropy_evolution = []
+state_counts_global = [0] * (N_B * (N_B - 1) // 2 + 1)
+state_counts_B_without_A = [0] * (N_B * (N_B - 1) // 2 + 1)
+state_counts_A = [0] * (N_A * (N_A - 1) // 2 + 1)
+state_counts_B = [0] * (N_B * (N_B - 1) // 2 + 1)
 
-# Streamlit placeholders for real-time updates
+# Streamlit placeholders for live updates
 energy_chart_placeholder = st.empty()
-entropy_chart_placeholder = st.empty()
+global_entropy_chart = st.empty()
+entropy_A_chart = st.empty()
+entropy_B_chart = st.empty()
+entropy_B_without_A_chart = st.empty()
 
 # Simulation loop
 for step in range(steps):
     if not simulation_state["running"]:
         break  # Stop simulation if requested
 
-    # Pick two adjacent elements to swap
-    i = random.randint(0, N - 2)  # Ensure i and i+1 are valid indices
-    delta_E = calculate_delta_energy(current_permutation, i)
+    # Randomly shuffle B
+    random.shuffle(B)
+    random.shuffle(A)
 
-    # Decide whether to accept the swap
-    if delta_E <= 0 or random.random() < np.exp(-delta_E / T):
-        # Perform the swap
-        current_permutation[i], current_permutation[i + 1] = current_permutation[i + 1], current_permutation[i]
-        current_energy += delta_E
+    # Calculate restricted microstates for B with A constraints
+    accessible_states_B_with_A = restricted_microstates(B, A)
+    state_counts_global[accessible_states_B_with_A] += 1
+    state_counts_B[accessible_states_B_with_A] += 1
 
-    # Track energy
-    energies.append(current_energy)
-    state_counts[current_energy] += 1
+    # Calculate microstates for B without A
+    state_counts_B_without_A[len(B) * (len(B) - 1) // 2] += 1
 
-    # Calculate entropy
-    current_entropy = calculate_entropy(state_counts, step + 1)
-    entropy_evolution.append(current_entropy)
+    # Calculate microstates for A
+    state_counts_A[len(A) * (len(A) - 1) // 2] += 1
 
-    # Update charts every 100 steps
+    # Calculate entropies
+    global_entropy = calculate_entropy(state_counts_global, step + 1)
+    entropy_A = calculate_entropy(state_counts_A, step + 1)
+    entropy_B = calculate_entropy(state_counts_B, step + 1)
+    entropy_B_without_A = calculate_entropy(state_counts_B_without_A, step + 1)
+
+    global_entropies.append(global_entropy)
+    entropies_A.append(entropy_A)
+    entropies_B.append(entropy_B)
+    entropies_B_without_A.append(entropy_B_without_A)
+
+    # Track energy as inverse of accessible states (higher constraints = higher energy)
+    energy = N_B - accessible_states_B_with_A
+    energies.append(energy)
+
+    # Update live charts every 100 steps
     if step % 100 == 0 or step == steps - 1:
         with energy_chart_placeholder:
-            st.line_chart(energies, use_container_width=True)
+            st.line_chart(energies, use_container_width=True, height=250, width=700)
 
-        with entropy_chart_placeholder:
-            st.line_chart(entropy_evolution, use_container_width=True)
+        with global_entropy_chart:
+            st.line_chart(global_entropies, use_container_width=True, height=250, width=700)
+        with entropy_A_chart:
+            st.line_chart(entropies_A, use_container_width=True, height=250, width=700)
+        with entropy_B_chart:
+            st.line_chart(entropies_B, use_container_width=True, height=250, width=700)
+        with entropy_B_without_A_chart:
+            st.line_chart(entropies_B_without_A, use_container_width=True, height=250, width=700)
 
         st.write(f"**Step {step + 1}/{steps}**")
-        st.write(f"Current Energy: {current_energy}")
-        st.write(f"Current Entropy: {current_entropy:.4f}")
+        st.write(f"Global Entropy: {global_entropy:.4f}")
+        st.write(f"Entropy of A: {entropy_A:.4f}")
+        st.write(f"Entropy of B: {entropy_B:.4f}")
+        st.write(f"Entropy of B without A: {entropy_B_without_A:.4f}")
+        st.write(f"Energy: {energy:.4f}")
 
-        time.sleep(0.1)  # Simulate delay for better visualization
-
+# Display final results
 if simulation_state["running"]:
     st.success("Simulation complete!")
+    st.write("### Final Results:")
+    st.write(f"Global Entropy: {global_entropies[-1]:.4f}")
+    st.write(f"Entropy of A: {entropies_A[-1]:.4f}")
+    st.write(f"Entropy of B: {entropies_B[-1]:.4f}")
+    st.write(f"Entropy of B without A: {entropies_B_without_A[-1]:.4f}")
+    st.write(f"Final Energy: {energies[-1]:.4f}")
