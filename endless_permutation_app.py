@@ -13,10 +13,9 @@ r = st.sidebar.slider("Logistic Map Parameter (r)", 0.0, 4.0, 3.8, step=0.01)
 iterations = st.sidebar.slider("Number of Iterations", 10, 500, 100, step=10)
 
 # Button to Start Simulation
-if st.button("Run Simulation"):
+start_simulation = st.sidebar.button("Run Simulation")
 
-    st.write("Simulation running...")
-    
+if start_simulation:
     # Initial permutation
     permutation = np.arange(1, N + 1)
     st.write(f"Initial Permutation: {permutation}")
@@ -43,7 +42,7 @@ if st.button("Run Simulation"):
     # Calculate entropy evolution
     unique_permutations = [tuple(p) for p in permutation_history]
     unique_counts = {perm: unique_permutations.count(perm) for perm in set(unique_permutations)}
-    probs = np.array(list(unique_counts.values())) / iterations
+    probs = np.array(list(unique_counts.values())) / len(permutation_history)
     entropy_values = entropy(probs)
 
     # Visualization
@@ -51,9 +50,11 @@ if st.button("Run Simulation"):
     st.write(permutation)
 
     st.subheader("Entropy Expansion Over Iterations")
-    plt.plot(range(len(probs)), probs, label="Entropy Evolution")
+    plt.figure()
+    plt.plot(range(len(permutation_history)), [entropy_values] * len(permutation_history), label="Entropy")
     plt.xlabel("Iterations")
     plt.ylabel("Entropy")
+    plt.legend()
     st.pyplot(plt)
 
     st.subheader("Permutation Evolution")
