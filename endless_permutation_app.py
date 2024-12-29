@@ -2,82 +2,65 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Title
-st.title("Topological Entropy of Permutations with Local Interactions")
+def calculate_entropy(arr):
+    """Calculate the number of inversions (entropy) in the array."""
+    inv_count = 0
+    for i in range(len(arr)):
+        for j in range(i + 1, len(arr)):
+            if arr[i] > arr[j]:
+                inv_count += 1
+    return inv_count
 
-# Sidebar for Parameters
-st.sidebar.header("Simulation Parameters")
-N = st.sidebar.slider("Number of Elements (N)", min_value=5, max_value=1000, value=10, step=1)
-r = st.sidebar.slider("Logistic Map Parameter (r)", min_value=0.0, max_value=4.0, value=3.8, step=0.01)
-iterations = st.sidebar.slider("Number of Iterations", min_value=10, max_value=1000, value=100, step=10)
+def simulate_entropy(N, steps, temperature):
+    """Simulate the system and track entropy over time using Boltzmann acceptance."""
+    # Initialize the set
+    S = np.arange(1, N + 1)
+    entropy_history = [calculate_entropy(S)]
 
-# Buttons
-start_simulation = st.sidebar.button("Start Simulation")
-reset_simulation = st.sidebar.button("Reset Simulation")
+    for _ in range(steps):
+        # Randomly choose two elements to swap
+        i, j = np.random.choice(N, 2, replace=False)
+        S_new = S.copy()
+        S_new[i], S_new[j] = S_new[j], S_new[i]
 
-# Session state for managing the simulation
-if "simulation_running" not in st.session_state:
-    st.session_state.simulation_running = False
+        # Calculate change in entropy (ΔH) and energy (ΔE)
+        H_old = calculate_entropy(S)
+        H_new = calculate_entropy(S_new)
+        delta_H = H_new - H_old
+        delta_E = -delta_H
 
-# Handle button clicks
-if start_simulation:
-    st.session_state.simulation_running = True
-if reset_simulation:
-    st.session_state.simulation_running = False
+        # Boltzmann acceptance probability
+        if delta_E <= 0:
+            # Always accept if entropy increases (energy decreases)
+            S = S_new
+        else:
+            # Accept with probability exp(-ΔE / T)
+            if np.random.rand() < np.exp(-delta_E / temperature):
+                S = S_new
 
-# Main Simulation Logic
-if st.session_state.simulation_running:
-    st.subheader("Simulation in Progress...")
-    
-    # Initialize permutation
-    permutation = np.arange(1, N + 1)
-    entropy_values = []
-    unique_permutation_counts = []
-    permutation_history = []
+        # Record entropy
+        entropy_history.append(calculate_entropy(S))
 
-    # Define logistic transformation function
-    def logistic(x, r):
-        return r * x * (1 - x)
+    return entropy_history
 
-    # Create a placeholder for the graph
-    entropy_plot = st.empty()
+# Streamlit app
+st.title("Entropy Simulation with Boltzmann Acceptance")
+st.write("Simulating a system where entropy evolves based on Boltzmann distribution.")
 
-    # Simulation loop
-    for t in range(iterations):
-        logistic_values = logistic(permutation / N, r)
-        
-        # Apply local swaps based on logistic values
-        for i in range(len(permutation) - 1):
-            if logistic_values[i] > logistic_values[i + 1]:
-                permutation[i], permutation[i + 1] = permutation[i + 1], permutation[i]
-        
-        # Update permutation history
-        permutation_history.append(tuple(permutation))
-        
-        # Count unique permutations
-        unique_permutations = set(permutation_history)
-        unique_count = len(unique_permutations)
-        unique_permutation_counts.append(unique_count)
+# Parameters
+N = st.slider("Size of the set (N)", 10, 100, 50)
+steps = st.slider("Number of simulation steps", 100, 1000, 500)
+temperature = st.slider("Temperature (T)", 0.1, 10.0, 1.0)
 
-        # Estimate topological entropy
-        if t > 0:  # Avoid log(0) at the first step
-            current_entropy = (1 / (t + 1)) * np.log(unique_count)
-            entropy_values.append(current_entropy)
+# Run simulation
+entropy_history = simulate_entropy(N, steps, temperature)
 
-        # Update graph with live data
-        with entropy_plot.container():
-            plt.figure(figsize=(8, 4))
-            plt.plot(entropy_values, label="Topological Entropy", color="blue")
-            plt.xlabel("Iteration")
-            plt.ylabel("Entropy")
-            plt.title("Entropy Evolution")
-            plt.legend()
-            plt.grid()
-            st.pyplot(plt)
-
-    # Final Results
-    st.subheader("Final Results")
-    st.write("Final Permutation:", permutation)
-    st.write("Final Topological Entropy:", entropy_values[-1] if entropy_values else "Not computed")
-else:
-    st.write("Adjust parameters and click **Start Simulation** to begin.")
+# Plot results
+st.write("### Entropy Over Time")
+plt.figure(figsize=(10, 6))
+plt.plot(entropy_history, label="Entropy")
+plt.xlabel("Time Steps")
+plt.ylabel("Entropy (Number of Inversions)")
+plt.title(f"Evolution of Entropy (Temperature = {temperature})")
+plt.legend()
+st.pyplot(plt)
