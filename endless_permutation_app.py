@@ -51,7 +51,7 @@ if st.button("Run Simulation"):
     st.write(permutation)
 
     st.subheader("Entropy Expansion Over Iterations")
-    plt.plot(range(1, len(unique_counts) + 1), entropy_values)
+    plt.plot(range(len(probs)), probs, label="Entropy Evolution")
     plt.xlabel("Iterations")
     plt.ylabel("Entropy")
     st.pyplot(plt)
