@@ -12,10 +12,19 @@ N = st.sidebar.slider("Number of Elements (N)", 5, 50, 10, step=1)
 r = st.sidebar.slider("Logistic Map Parameter (r)", 0.0, 4.0, 3.8, step=0.01)
 iterations = st.sidebar.slider("Number of Iterations", 10, 500, 100, step=10)
 
-# Button to Start Simulation
+# Initialize session state for simulation control
+if "simulation_started" not in st.session_state:
+    st.session_state.simulation_started = False
+
+# Button to start the simulation
 start_simulation = st.sidebar.button("Run Simulation")
 
+# Handle button click
 if start_simulation:
+    st.session_state.simulation_started = True
+
+# Simulation logic
+if st.session_state.simulation_started:
     # Initial permutation
     permutation = np.arange(1, N + 1)
     st.write(f"Initial Permutation: {permutation}")
