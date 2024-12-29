@@ -12,16 +12,13 @@ def calculate_entropy(arr):
                 inv_count += 1
     return inv_count
 
-def simulate_system(S, steps, temperature, max_size_A):
+def simulate_system(S, steps, temperature, A):
     """Simulate the system with local interactions and track entropy."""
     N = len(S)
+    B = np.setdiff1d(S, A)  # B is always S \ A
     entropy_A_history = []
     entropy_B_history = []
     entropy_S_history = []
-
-    # Initialize subsets
-    A = np.random.choice(S, size=max_size_A, replace=False)
-    B = np.setdiff1d(S, A)
 
     for step in range(steps):
         # Calculate entropy of A, B, and S
@@ -53,28 +50,11 @@ def simulate_system(S, steps, temperature, max_size_A):
             if np.random.rand() < np.exp(-delta_E / temperature):
                 S = S_new
 
-        # Update subsets A and B
-        A = np.random.choice(S, size=max_size_A, replace=False)
+        # Update B (since S has changed)
         B = np.setdiff1d(S, A)
 
         # Yield results for live updating
         yield entropy_A_history, entropy_B_history, entropy_S_history, A, B, S
-
-def find_subset_A(S, max_size_A):
-    """Find the subset A that minimizes the entropy of B when A is present."""
-    min_entropy = float('inf')
-    best_A = None
-
-    # Iterate over all possible subsets A of size up to max_size_A
-    for size_A in range(1, max_size_A + 1):
-        for A in combinations(S, size_A):
-            B = np.setdiff1d(S, A)
-            entropy_B = calculate_entropy(B)
-            if entropy_B < min_entropy:
-                min_entropy = entropy_B
-                best_A = A
-
-    return best_A, min_entropy
 
 # Streamlit app
 st.title("Entropy Evolution Simulation with Local Interactions")
@@ -89,6 +69,9 @@ temperature = st.slider("Temperature (T)", 0.1, 10.0, 1.0)
 # Initialize the system
 S = np.arange(1, N + 1)
 np.random.shuffle(S)
+
+# Define subset A (fixed at the start)
+A = np.random.choice(S, size=max_size_A, replace=False)
 
 # Start/Stop button
 if "running" not in st.session_state:
@@ -109,7 +92,7 @@ S_placeholder = st.empty()
 
 # Simulation loop
 if st.session_state.running:
-    for entropy_A_history, entropy_B_history, entropy_S_history, A, B, S in simulate_system(S, steps, temperature, max_size_A):
+    for entropy_A_history, entropy_B_history, entropy_S_history, A, B, S in simulate_system(S, steps, temperature, A):
         # Update plots
         plt.figure(figsize=(10, 3))
         plt.plot(entropy_A_history, label="Entropy of A", color="red")
@@ -143,8 +126,15 @@ if st.session_state.running:
         # Pause for live updating
         time.sleep(0.1)
 
-    # Find the subset A that satisfies the condition
-    best_A, min_entropy = find_subset_A(S, max_size_A)
-    st.write(f"### Subset A that satisfies the condition:")
-    st.write(best_A)
-    st.write(f"The entropy of B when A is present ({min_entropy}) is less than when A is absent.")
+    # Compare entropy of B with and without A
+    B_without_A = S  # When A is not present, B is the entire system
+    entropy_B_without_A = calculate_entropy(B_without_A)
+    entropy_B_with_A = calculate_entropy(B)
+
+    st.write(f"### Subset A: {A}")
+    st.write(f"Entropy of B when A is present: {entropy_B_with_A}")
+    st.write(f"Entropy of B when A is absent: {entropy_B_without_A}")
+    if entropy_B_with_A < entropy_B_without_A:
+        st.write("The subset A satisfies the condition: Entropy of B is lower when A is present.")
+    else:
+        st.write("The subset A does not satisfy the condition.")
